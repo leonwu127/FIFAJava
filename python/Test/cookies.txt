@@ -1,0 +1,14 @@
+#LWP-Cookies-2.0
+Set-Cookie3: _nx_mpcid="238caa8f-afee-4897-abdb-a290d77732dc"; path="/"; domain=".ea.com"; path_spec; domain_dot; expires="2021-09-30 08:45:54Z"; version=0
+Set-Cookie3: FUTWebPhishing-903739729=4969960282415770612; path="/"; domain=".easports.com"; path_spec; domain_dot; expires="2016-11-25 08:49:52Z"; version=0
+Set-Cookie3: remid="TUU6RHpPYUIzZ0pvcWRCY0tOWkRUV09NVVJYNzlWdjJoanR3OXpRVzB3VDoxMDI2MjU5MTk.y48Av7dHl5EzoX30HdtBwk5jzEsZS70VKEqSJHWx"; path="/connect"; domain="accounts.ea.com"; path_spec; secure; expires="2016-12-25 08:45:54Z"; HttpOnly=None; version=0
+Set-Cookie3: sid=SvNTbfLpMK2O6HGSseflVNE8hy6juJBNOvTE32DkKNC9EEZYyX3VWTYXMz6Fx; path="/connect"; domain="accounts.ea.com"; path_spec; secure; discard; HttpOnly=None; version=0
+Set-Cookie3: isPogo=false; path="/"; domain="signin.ea.com"; path_spec; expires="2016-11-02 08:45:54Z"; version=0
+Set-Cookie3: webun="\"leonwu127@icloud.com\""; path="/"; domain="signin.ea.com"; path_spec; expires="2016-11-02 08:45:54Z"; version=0
+Set-Cookie3: JSESSIONID="080B7C9BB32EB1329F88FDDB157CC735.eanshprdaccounts17"; path="/p/"; domain="signin.ea.com"; path_spec; secure; discard; HttpOnly=None; version=0
+Set-Cookie3: EASFC-WEB-SESSION=a9qah4jrrt09en9vusppnhi9k7; path="/"; domain="www.easports.com"; path_spec; expires="2016-10-27 08:45:58Z"; HttpOnly=None; version=0
+Set-Cookie3: EASSSO=403f43433d3e2857bebbb782c2484223fa8193206429aaf2ea79962385958651; path="/"; domain="www.easports.com"; path_spec; expires="2016-10-28 08:49:49Z"; version=0
+Set-Cookie3: XSRF-TOKEN=P6WdEWAqKBIlNnQSy68zWQiaPwiAoC7CetXtWAU_WDY; path="/"; domain="www.easports.com"; path_spec; discard; version=0
+Set-Cookie3: f1c6ef8b=1; path="/"; domain="www.easports.com"; path_spec; expires="2016-10-28 08:49:49Z"; version=0
+Set-Cookie3: hl=us; path="/"; domain="www.easports.com"; path_spec; expires="2017-10-26 08:49:49Z"; version=0
+Set-Cookie3: futweb=s0648a3hntpdd9lk715vdoaql4; path="/iframe/fut17"; domain="www.easports.com"; path_spec; discard; HttpOnly=None; version=0
