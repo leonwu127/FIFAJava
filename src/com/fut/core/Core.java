@@ -1,6 +1,5 @@
 package com.fut.core;
 import com.fut.hash.*;
-
 /**
  * Created by leonwu127 on 01/11/2016.
  */
