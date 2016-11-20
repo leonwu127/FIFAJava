@@ -13,33 +13,6 @@ import java.util.ArrayList;
 /**
  * Created by leonwu127 on 01/11/2016.
  */
-class KeyValuePair extends Pair{
-    String key;
-    String value;
-
-
-    @Override
-    public String getLeft() {
-        return key;
-    }
-
-    @Override
-    public String getRight() {
-        return value;
-    }
-
-    @Override
-    public int compareTo(Object o) {
-        return 0;
-    }
-
-    @Override
-    public Boolean setValue(Object value) {
-
-        return null;
-    }
-}
-
 
 
 

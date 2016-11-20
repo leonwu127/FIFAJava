@@ -22,7 +22,7 @@ for player in players:
                 items = fut.searchAuctions('player', assetId=player.assetId, max_buy=player.maxBid)
                 for item in items:
                         #bid and list here
-                time.sleep(random.randint(1,3))
+                    time.sleep(random.randint(1,3))
         time.sleep(random.randint(4,8)) #here is the time for changing player in search
 
 
