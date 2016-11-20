@@ -1,3 +1,5 @@
+package com.fut.constants;
+
 /**
  * Created by leonwu127 on 24/09/2017.
  */
