@@ -11,12 +11,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
@@ -29,8 +31,10 @@ import org.json.simple.*;
 import org.json.simple.JSONObject;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.Buffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -59,48 +63,111 @@ public class Core {
 
     }
 
-
-
-
-
-    public void login(String email, String passwd, String secretAnswer, String code, String emulate){
-        Hash hashMethod = new Hash();
-        String secretAnswerHash = hashMethod.eaHash(secretAnswer);
-
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-
-
-        // Cookie for saving login information
-        CookieStore cookieStore = new BasicCookieStore();
-
-
-
-        // Emulate
-    }
+    private static String homeURL = "https://www.easports.com/fifa/ultimate-team/web-app";
 
 
     public static void main(String[] args) throws IOException, URISyntaxException {
+
+        // set initial cookie
+        // BasicClientCookie cookie = new BasicClientCookie();
+        // TODO: Proxy?
+
+
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
-        URI uri = new URI("https://www.easports.com/fifa/ultimate-team/web-app");
-
+        /********** Home Page **********/
+        URI uri_home = new URI("https://www.easports.com/fifa/ultimate-team/web-app");
+        // Http Context created to save http state.
         HttpContext hc = new BasicHttpContext();
 
-        HttpGet hg = new HttpGet(uri);
-        HttpResponse response = httpClient.execute(hg,hc);
-        //uri.getHost()
+        HttpGet hg = new HttpGet(uri_home);
+        CloseableHttpResponse response = httpClient.execute(hg,hc);
+        HttpClientContext clientContext = HttpClientContext.adapt(hc);
+        HttpHost homePageHost = clientContext.getTargetHost();
+        HttpRequest homePageRequest = clientContext.getRequest();
+        // home page real request uri got by using the state of the http content.
+        String currentUri = homePageHost.toURI() + homePageRequest.getRequestLine().getUri();
+        response.close();
 
-        HttpUriRequest currentReq = (HttpUriRequest)hc.getAttribute(HttpCoreContext.HTTP_REQUEST);
-        HttpHost currentHost = (HttpHost)  hc.getAttribute(HttpCoreContext.HTTP_TARGET_HOST);
-
-        String currentUrl = (currentReq.getURI().isAbsolute()) ? currentReq.getURI().toString() : (currentHost.toURI() + currentReq.getURI());
-        System.out.println(currentUrl);
-
+        /********** Login Page Post Request **********/
         String email = "leonwu127@icloud.com";
         String password = "13655197351Wzq";
         String secretAnswer = "weiwei";
-        Core core = new Core(email, password, secretAnswer);
-        String url = core.getRedirectUrl(email, password, secretAnswer, currentUrl, httpClient);
+        // Prepare data.
+        ArrayList<NameValuePair> nvp = new ArrayList<>();
+        nvp.add(new BasicNameValuePair("_eventId","submit"));
+        nvp.add(new BasicNameValuePair("country","US"));
+        nvp.add(new BasicNameValuePair("rememberMe","on"));
+        nvp.add(new BasicNameValuePair("email",email));
+        nvp.add(new BasicNameValuePair("password",password));
+        nvp.add(new BasicNameValuePair("phoneNumber",""));
+        nvp.add(new BasicNameValuePair("passwordForPhone",""));
+        nvp.add(new BasicNameValuePair("gCaptchaResponse",""));
+        nvp.add(new BasicNameValuePair("isPhoneNumberLogin","false"));
+        nvp.add(new BasicNameValuePair("isIncompletePhone",""));
+        nvp.add(new BasicNameValuePair("_rememberMe","on"));
+        HttpPost hp = new HttpPost(currentUri);
+        hp.setEntity(new UrlEncodedFormEntity(nvp));
+        response = httpClient.execute(hp,hc);
+        if (response.getStatusLine().toString().equals("HTTP/1.1 302 Found")){
+            currentUri = response.getFirstHeader("Location").getValue();
+            currentUri = homePageHost.toURI() + currentUri + "&_eventId=end";
+        }
+        System.out.println("Login Page URI: "+ currentUri);
+        response.close();
+
+        /************* Two Factor Code Post Request *************/
+        HttpGet hGet = new HttpGet(currentUri);
+        response = httpClient.execute(hGet,hc);
+        boolean codeSent = false;
+        try{
+            String responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+            if (responseString.contains("twofactorCode")){
+                codeSent = true;
+            }
+        }catch (Exception e){
+
+        }
+        response.close();
+
+        HttpClientContext twoFactorContent = HttpClientContext.adapt(hc);
+        currentUri = homePageHost.toURI() + twoFactorContent.getRequest().getRequestLine().getUri();
+        System.out.println("Two Factor Code Uri: " + currentUri);
+
+        if(codeSent){
+            System.out.println("Please enter your Two Factor Code: ");
+            BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+            String twoFactorCode = userInput.readLine();
+            nvp = new ArrayList<>();
+            nvp.add(new BasicNameValuePair("twofactorCode",twoFactorCode));
+            nvp.add(new BasicNameValuePair("_eventId","submit"));
+            nvp.add(new BasicNameValuePair("_trustThisDevice","on"));
+            nvp.add(new BasicNameValuePair("trustThisDevice","on"));
+            for (NameValuePair nv:nvp){
+                System.out.println(nv.getName() +": "+nv.getValue());
+            }
+            hp = new HttpPost(currentUri);
+            hp.setEntity(new UrlEncodedFormEntity(nvp));
+            response = httpClient.execute(hp,hc);
+            System.out.println(response.getStatusLine());
+            response.close();
+            if (response.getStatusLine().toString().equals("HTTP/1.1 302 Found")){
+                currentUri = response.getFirstHeader("Location").getValue();
+                currentUri = homePageHost.toURI() + currentUri + "&_eventId=submit";
+                HttpGet hg2 = new HttpGet(currentUri);
+                response = httpClient.execute(hg2,hc);
+                System.out.println(response.getStatusLine());
+            } else{
+                codeSent = false;
+            }
+
+            BufferedReader br2 = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            while(br2.readLine() != null){
+                System.out.println(br2.readLine());
+            }
+            response.close();
+
+        }
 
         //String email = "17fifa.com@gmail.com";
         //String password = "17FIFAcom";
@@ -114,88 +181,6 @@ public class Core {
         //getStringFromInputStream(loginResponse2.getEntity().getContent());
 
     }
-
-    /**
-     *
-     * @param email user's email.
-     * @param password user's password.
-     * @param secretAnswer user's secretAnswer.
-     * @param currentUrl currentUrl.
-     * @param httpClient
-     * @return redirect url
-     * @throws IOException
-     */
-    public String getRedirectUrl(String email, String password,String secretAnswer, String currentUrl, CloseableHttpClient httpClient) throws IOException {
-        String redirectUrl = "";
-        ArrayList<NameValuePair> nvp = new ArrayList<>();
-
-        // Prepare data.
-        nvp.add(new BasicNameValuePair("_eventId","submit"));
-        nvp.add(new BasicNameValuePair("country","US"));
-        nvp.add(new BasicNameValuePair("rememberMe","on"));
-        nvp.add(new BasicNameValuePair("email",email));
-        nvp.add(new BasicNameValuePair("password",password));
-        nvp.add(new BasicNameValuePair("phoneNumber",""));
-        nvp.add(new BasicNameValuePair("passwordForPhone",""));
-        nvp.add(new BasicNameValuePair("gCaptchaResponse",""));
-        nvp.add(new BasicNameValuePair("isPhoneNumberLogin","false"));
-        nvp.add(new BasicNameValuePair("isIncompletePhone",""));
-        nvp.add(new BasicNameValuePair("_rememberMe","on"));
-
-        // Construct a http post request.
-        HttpPost hp = new HttpPost(currentUrl);
-        HttpContext hc = new BasicHttpContext();
-        hp.setEntity(new UrlEncodedFormEntity(nvp));
-        HttpResponse hr = httpClient.execute(hp,hc);
-
-        if (hr.getStatusLine().toString().equals("HTTP/1.1 302 Found")){
-            redirectUrl = hr.getFirstHeader("Location").getValue();
-            redirectUrl = "https://signin.ea.com" + redirectUrl + "&_eventId=end";
-            System.out.println(redirectUrl);
-        }
-        HttpContext nhc = new BasicHttpContext();
-        HttpGet hg = new HttpGet(redirectUrl);
-        HttpResponse hr2 = httpClient.execute(hg,nhc);
-
-        return redirectUrl;
-        //redirectUrl = m.group(1)+"&_eventId=end";
-        //System.out.println(m.group(1)+"&_eventId=end");
-
-        //HttpGet hg = new HttpGet(redirectUrl);
-        //HttpResponse hr2 = httpClient.execute(hg,nhc);
-
-        //hp.addHeader("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.122 Safari/537.36");
-        //hp.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        /*
-        hp.addHeader("Accept-Encoding","gzip,deflate,sdch");
-        hp.addHeader("Accept-Language","en-US,en;q=0.8");
-        hp.addHeader("Connection","keep-alive");
-        hp.addHeader("DNT","1");
-        hp.addHeader("Referer",currentUrl);
-
-        hp.setEntity(new UrlEncodedFormEntity(nvp));
-        HttpContext hcResponse = new BasicHttpContext();
-        HttpResponse loginResponse = httpClient.execute(hp,hcResponse);
-        // Code get, now try to find the new url
-
-        // url redirection
-        String url = loginResponse.getHeaders("Location")[0].getValue().toString();
-        */
-        //HttpPost hp2 = new HttpPost(url);
-        //hp2.addHeader("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.122 Safari/537.36");
-        //hp2.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        //hp2.addHeader("Accept-Encoding","gzip,deflate,sdch");
-        //hp2.addHeader("Accept-Language","en-US,en;q=0.8");
-        //hp2.addHeader("Connection","keep-alive");
-        //hp2.addHeader("DNT","1");
-        //hp2.addHeader("Referer",currentUrl);
-
-        //hp2.setEntity(new UrlEncodedFormEntity(nvp));
-        //HttpContext hcResponse2 = new BasicHttpContext();
-        //HttpResponse loginResponse2 = httpClient.execute(hp,hcResponse2);
-    }
-
-
 
     public String getWebAppUrl(String url, CloseableHttpClient httpClient ,String code) throws IOException {
         ArrayList<NameValuePair> nvp2 = new ArrayList<>();
