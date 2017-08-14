@@ -153,21 +153,45 @@ public class Core {
             response.close();
             if (response.getStatusLine().toString().equals("HTTP/1.1 302 Found")){
                 currentUri = response.getFirstHeader("Location").getValue();
-                currentUri = homePageHost.toURI() + currentUri + "&_eventId=submit";
+                currentUri = homePageHost.toURI() + currentUri;
                 HttpGet hg2 = new HttpGet(currentUri);
                 response = httpClient.execute(hg2,hc);
                 System.out.println(response.getStatusLine());
             } else{
                 codeSent = false;
             }
-
-            BufferedReader br2 = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-            while(br2.readLine() != null){
-                System.out.println(br2.readLine());
-            }
-            response.close();
-
         }
+        String responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+        //System.out.println(responseString);
+
+        /***** Set up authorized device ******/
+        if (responseString.contains("Set Up an App Authenticator")){
+            HttpClientContext authorizedDevice = HttpClientContext.adapt(hc);
+            currentUri = homePageHost.toURI() + authorizedDevice.getRequest().getRequestLine().getUri();
+            //currentUri = currentUri.replace("s4","s5");
+            System.out.println("Setup authorized stage URI: " + currentUri);
+            nvp = new ArrayList<>();
+            nvp.add(new BasicNameValuePair("_eventId","cancel"));
+            nvp.add(new BasicNameValuePair("appDevice","IPHONE"));
+            for (NameValuePair nv:nvp){
+                System.out.println(nv.getName() +": "+nv.getValue());
+            }
+            hp = new HttpPost(currentUri);
+            hp.setEntity(new UrlEncodedFormEntity(nvp));
+            response = httpClient.execute(hp,hc);
+            System.out.println(response.getStatusLine());
+            response.close();
+            // GET request after redirect result.
+            currentUri = response.getFirstHeader("Location").getValue();
+            System.out.println("New redirect url:" + currentUri);
+            HttpGet hg2 = new HttpGet(currentUri);
+            response = httpClient.execute(hg2,hc);
+            System.out.println(response.getStatusLine());
+            responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+            System.out.println(responseString);
+            response.close();
+        }
+
 
         //String email = "17fifa.com@gmail.com";
         //String password = "17FIFAcom";
